@@ -4,27 +4,28 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Mostgraph measurement results classifier</title>
-    <meta content="Mostgraph measurement results classifier" name="title">
-    <meta content="Mostgraph measurement results classifier" name="description">
-    <meta content="Mostgraph, reference ranges, measurement, classifier, normal, abnormal" name="keywords">
+    <title>喘息の診断</title>
+    <meta content="喘息の診断" name="title">
+    <meta content="モストグラフ, FeNOデータによる咳喘息判定" name="description">
+    <meta content="モストグラフ,FeNO, 咳喘息, 基準範囲, 判定" name="keywords">
     <style>
      body {background-color: powderblue;}
      h1   {font-family: courier; color: black; }
      h2   {color: blue; }
      input[type="number"] {width: 160px;}
+	 .button { width: 300px; text-align: center;}
     </style>
   </head>
 
   <body>
     <h1>喘息の診断</h1>
-    <h2>モストグラフ・FeNOデータによる(咳)喘息判定</h2>
+    <h2 style="font-size: 15px;">モストグラフ,FeNO,V25による(咳)喘息判定</h2>
      
 
 	<form name="form" id="gahwm"  action="">
 		<table border="1" width="300" cellspacing="0" cellpadding="1" bordercolor="#333333">
 		<tr>
-			<td bgcolor="#CCFFCC">性別</td>
+			<td width="40%" bgcolor="#CCFFCC">性別</td>
 			<td>
 			  <input type="radio" id="gender_male" name="gender" value="0" >男性
 			  <input type="radio" id="gender_female" name="gender" value="1" >女性
@@ -72,15 +73,28 @@
 			<td bgcolor="#CCFFCC">ALX_inhale</td>
 			<td><input type="number" id="ALXin" min="-100" max="100"  required></td>
 		</tr>
+	    </table>
+
+		<p><input type="button" class="button" value="モストグラフによる判定" onClick="keisan(this)" ></p>
+
+		<table border="1" width="300" cellspacing="0" cellpadding="1" bordercolor="#333333">
 		<tr>
-			<td bgcolor="CCFFCC">FeNO</td>
+			<td width="40%" bgcolor="CCFFCC">FeNO</td>
 			<td><input type="number" id="FeNO" min="0" max="100" required></td>
 		</tr>
-		</table>
+	    </table>
+		<p><input type="button" class="button" value="モストグラフ・FeNOによる判定" onClick="keisan(this)" ></p>
 
-		<p><span style="color:blue;">全データを入力後、判定ボタンを押してください。</p>
-		<input type="button" value="　　　　　　　　　　　　　　　判定　　　　　　　　　　　　　　　　" onClick="keisan(this)" >
-		
+		<table border="1" width="300" cellspacing="0" cellpadding="1" bordercolor="#333333">
+		<tr>
+			<td width="40%" bgcolor="CCFFCC">V25/予測V25</td>
+			<td><input type="number" id="V25" min="0" max="100" required></td>
+		</tr>
+	    </table>
+		<p><input type="button" class="button" value="モストグラフ・FeNO・V25/予測V25による判定" onClick="keisan(this)" ></p>
+	
+
+		<p><span style="color:blue;">データを入力後、判定ボタンを押してください。</p>	
 		<div id="DisplayProbability" style="font-family: courier; color:red; font-size: 120%;">喘息の判定結果: <span id="Probability"></span></div>
 	</form>
 
