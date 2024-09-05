@@ -11,9 +11,9 @@
     <style>
      body {background-color: powderblue;}
      h1   {font-family: courier; color: black; }
-     h2   {color: blue; }
+     h2   {font-family: courier; color: blue; }
      input[type="number"] {width: 160px;}
-	 .button { width: 300px; text-align: center;}
+	 .button { font-family: courier; width: 350px; text-align: center;}
     </style>
   </head>
 
@@ -23,9 +23,9 @@
      
 
 	<form name="form" id="gahwm"  action="">
-		<table border="1" width="300" cellspacing="0" cellpadding="1" bordercolor="#333333">
+		<table border="1" width="350" cellspacing="0" cellpadding="1" bordercolor="#333333">
 		<tr>
-			<td width="40%" bgcolor="#CCFFCC">性別</td>
+			<td width="50%" bgcolor="#CCFFCC">性別</td>
 			<td>
 			  <input type="radio" id="gender_male" name="gender" value="0" >男性
 			  <input type="radio" id="gender_female" name="gender" value="1" >女性
@@ -75,181 +75,55 @@
 		</tr>
 	    </table>
 
-		<p><input type="button" class="button" value="モストグラフによる判定" onClick="keisan(this)" ></p>
+		<p><input type="button" class="button" value="モストグラフによる判定" onClick="keisan_mostgraph()" ></p>
 
-		<table border="1" width="300" cellspacing="0" cellpadding="1" bordercolor="#333333">
+		<table border="1" width="350" cellspacing="0" cellpadding="1" bordercolor="#333333">
 		<tr>
-			<td width="40%" bgcolor="CCFFCC">FeNO</td>
+			<td width="50%" bgcolor="CCFFCC">FeNO</td>
 			<td><input type="number" id="FeNO" min="0" max="100" required></td>
 		</tr>
 	    </table>
-		<p><input type="button" class="button" value="モストグラフ・FeNOによる判定" onClick="keisan(this)" ></p>
+		<p><input type="button" class="button" value="モストグラフ・FeNOによる判定" onClick="keisan_mostgraphfeno(this)" ></p>
 
-		<table border="1" width="300" cellspacing="0" cellpadding="1" bordercolor="#333333">
+		<table border="1" width="350" cellspacing="0" cellpadding="1" bordercolor="#333333">
 		<tr>
-			<td width="40%" bgcolor="CCFFCC">V25/予測V25</td>
-			<td><input type="number" id="V25" min="0" max="100" required></td>
+			<td width="50%" bgcolor="CCFFCC">V25/予測V25(%)</td>
+			<td><input type="number" id="%V25" min="0" max="100" required></td>
 		</tr>
 	    </table>
-		<p><input type="button" class="button" value="モストグラフ・FeNO・V25/予測V25による判定" onClick="keisan(this)" ></p>
+		<p><input type="button" class="button" value="モストグラフ・FeNO・V25/予測V25による判定" onClick="keisan_mostgraphfenov25(this)" ></p>
 	
 
-		<p><span style="color:blue;">データを入力後、判定ボタンを押してください。</p>	
+		<p><span style="color:blue;">データを入力後、判定ボタンを押してください。</p>
 		<div id="DisplayProbability" style="font-family: courier; color:red; font-size: 120%;">喘息の判定結果: <span id="Probability"></span></div>
 	</form>
 
     <!-- Load TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
 
-    <script> 
-    <!-- keisan(): OnClick, analyze input, pass to Deep Learning inference [run()], display result  [ProbabilityForAbormal] -->
+    <script>
+    // Load the model of mostgraph judgement
+    let model_mostgraph;
+     async function Loadmodel_mostgraph() {
+       // Load the mostgraph tensorflow.js model
+       model_mostgraph = await tf.loadLayersModel('./mostgraph_model/model.json');
+     }
+    Loadmodel_mostgraph();
+
     let ProbabilityForAbormal;
-    
-    async function keisan() {
-    <!--  analyze input -->
-	// Checking Gender input
-	let input_gender = document.querySelector("input[name=gender]:checked");
-	if( input_gender ) {
-		gender = input_gender.value;
-		// console.log(gender);
-	}
-	else { // Alert when no input for Gender
-	    alert("性別を選択してください");
-		return 0;
-	}
-	//console.log(gender);	
-	
-	// Get R5in value
-	targetElement = document.getElementById('R5in');
-	let r5in = targetElement.value;
-	// console.log(r5in);
-	// Alert when no input at R5in
-	// isNaN will be true if invalid number was entered
-	if ((! r5in) || isNaN(r5in)) {  // Alert when no input for R5in
-		alert("R5inhaleを入力してください");
-		return 0;
-	} 
 
-	// Get R5ex value
-	targetElement = document.getElementById('R5ex');
-	let r5ex = targetElement.value;
-	// console.log(r5ex);
-	// Alert when no input at R5ex
-	// isNaN will be true if invalid number was entered
-	if ((! r5ex) || isNaN(r5ex)) {  // Alert when no input for R5ex
-		alert("PR5exhaleを入力してください");
-		return 0;
-	} 
+	let input_gender, r5in, r5ex, r20in, r20ex, x5in, x5ex, fresin, fresex, alxin, alxex, feno, v25;
 
-	// Get R20in value
-	targetElement = document.getElementById('R20in');
-	let r20in = targetElement.value;
-	// console.log(r20in);
-	// Alert when no input at R20in
-	// isNaN will be true if invalid number was entered
-	if ((! r20in) || isNaN(r20in)) {  // Alert when no input for R20in
-		alert("R20inhaleを入力してください");
-		return 0;
-	} 
-
-	// Get R20ex value
-	targetElement = document.getElementById('R20ex');
-	let r20ex = targetElement.value;
-	// console.log(r20ex);
-	// Alert when no input at R20ex
-	// isNaN will be true if invalid number was entered
-	if ((! r20ex) || isNaN(r20ex)) {  // Alert when no input for R20out
-		alert("R20exhaleを入力してください");
-		return 0;
-	} 
-
-	// Get X5in value
-	targetElement = document.getElementById('X5in');
-	let x5in = targetElement.value;
-	//console.log(x5in);
-	// Alert when no input at X5in
-	// isNaN will be true if invalid number was entered
-	if ((! x5in) || isNaN(x5in)) {  // Alert when no input for X5in
-		alert("X5inhaleを入力してください");
-		return 0;
-	} 
-
-	// Get X5ex value
-	targetElement = document.getElementById('X5ex');
-	let x5ex = targetElement.value;
-	// console.log(x5out);
-	// Alert when no input at X5ex
-	// isNaN will be true if invalid number was entered
-	if ((! x5ex) || isNaN(x5ex)) {  // Alert when no input for X5ex
-		alert("X5exhaleを入力してください");
-		return 0;
-	} 
-	
-	// Get Fresin value
-	targetElement = document.getElementById('Fresin');
-	let fresin = targetElement.value;
-	// console.log(fresin);
-	// Alert when no input at Fresin
-	// isNaN will be true if invalid number was entered
-	if ((! fresin) || isNaN(fresin)) {  // Alert when no input for Fresin
-		alert("Fresinhaleを入力してください");
-		return 0;
-	} 
-
-	// Get Fresex value
-	targetElement = document.getElementById('Fresex');
-	let fresex = targetElement.value;
-	// console.log(fresex);
-	// Alert when no input at Fresex
-	// isNaN will be true if invalid number was entered
-	if ((! fresex) || isNaN(fresex)) {  // Alert when no input for Fresex
-		alert("Fresexhaleを入力してください");
-		return 0;
-	} 
-
-	// ALXin value
-	targetElement = document.getElementById('ALXin');
-	let alxin = targetElement.value;
-	// console.log(alxin);
-	// Alert when no input at ALXin
-	// isNaN will be true if invalid number was entered
-	if ((! alxin) || isNaN(alxin)) {  // Alert when no input for ALXin
-		alert("ALXinhaleを入力してください");
-		return 0;
-	} 
-
-	// ALXex value
-	targetElement = document.getElementById('ALXex');
-	let alxex = targetElement.value;
-	// console.log(alxex);
-	// Alert when no input at ALXex
-	// isNaN will be true if invalid number was entered
-	if ((! alxex) || isNaN(alxex)) {  // Alert when no input for ALXex
-		alert("ALXexhaleを入力してください");
-		return 0;
-	}
-	
-    // FeNO value
-	targetElement = document.getElementById('FeNO');
-	let feno = targetElement.value;
-	// console.log(FeNO);
-	// Alert when no input at FeNO
-	// isNaN will be true if invalid number was entered
-	if ((! feno) || isNaN(feno)) {  // Alert when no input for FeNO
-		alert("FeNOを入力してください");
-		return 0;
-	}
-
-	<!-- pass to Deep Learning inference [run()] -->
 	<!-- set display area, treshould -->
     let elem = document.getElementById('DisplayProbability')
     cutoff = 0.845189;
-    
-    await run(parseFloat(gender), parseFloat(r5in), parseFloat(r5ex), parseFloat(r20in), parseFloat(r20ex), parseFloat(x5in), parseFloat(x5ex), parseFloat(fresin), parseFloat(fresex), parseFloat(alxin), parseFloat(alxex));
-    // console.log(ProbabilityForAbormal)
-   
+
+	function keisan_mostgraph() {
+    <!--  analyze input -->
+    if (inputcheck_mostgraph() == false) return 0;
+    mostgraphinference();
     <!--  display result  [ProbabilityForAbormal] -->
-     if ((ProbabilityForAbormal < cutoff )&( feno < 37 )){
+     if (ProbabilityForAbormal < cutoff ){
        elem.style.color = "green";
        displaytext ="喘息ではない";
      }
@@ -259,33 +133,240 @@
      } <!-- End of  if (ProbabilityForAbormal < cutoff) -->
      
      <!-- set display value -->
-    displaytext = displaytext + "\n" 
+    displaytext = displaytext + "\n"
     document.getElementById('Probability').innerText = displaytext
-    }   <!-- End of keisan(): OnClick, analyze input, pass to Deep Learning inference [run()], display result  [ProbabilityForAbormal] -->
+	}
+
+	<!-- モストグラフ項目の入力チェック　入力されていたらTrue、入力されていないとFalseを返す -->
+	function inputcheck_mostgraph(){
+    // Checking Gender input
+	input_gender = document.querySelector("input[name=gender]:checked");
+	if( input_gender )
+	{
+		gender = input_gender.value;
+		// console.log(gender);
+	}
+	else {
+		// Alert when no input for Gender
+	    alert("性別を選択してください");
+		return false;
+	}
+
+	// Get R5in value
+	targetElement = document.getElementById('R5in');
+	r5in = targetElement.value;
+	// console.log(r5in);
+	// Alert when no input at R5in
+	// isNaN will be true if invalid number was entered
+	if ((! r5in) || isNaN(r5in)) {  // Alert when no input for R5in
+		alert("R5inhaleを入力してください");
+		return false;
+	}
+
+	// Get R5ex value
+	targetElement = document.getElementById('R5ex');
+	r5ex = targetElement.value;
+	// console.log(r5ex);
+	// Alert when no input at R5ex
+	// isNaN will be true if invalid number was entered
+	if ((! r5ex) || isNaN(r5ex)) {  // Alert when no input for R5ex
+		alert("PR5exhaleを入力してください");
+		return false;
+	}
+
+	// Get R20in value
+	targetElement = document.getElementById('R20in');
+	r20in = targetElement.value;
+	// console.log(r20in);
+	// Alert when no input at R20in
+	// isNaN will be true if invalid number was entered
+	if ((! r20in) || isNaN(r20in)) {  // Alert when no input for R20in
+		alert("R20inhaleを入力してください");
+		return false;
+	}
+
+	// Get R20ex value
+	targetElement = document.getElementById('R20ex');
+	r20ex = targetElement.value;
+	// console.log(r20ex);
+	// Alert when no input at R20ex
+	// isNaN will be true if invalid number was entered
+	if ((! r20ex) || isNaN(r20ex)) {  // Alert when no input for R20out
+		alert("R20exhaleを入力してください");
+		return false;
+	}
+
+	// Get X5in value
+	targetElement = document.getElementById('X5in');
+	x5in = targetElement.value;
+	//console.log(x5in);
+	// Alert when no input at X5in
+	// isNaN will be true if invalid number was entered
+	if ((! x5in) || isNaN(x5in)) {  // Alert when no input for X5in
+		alert("X5inhaleを入力してください");
+		return false;
+	}
+
+	// Get X5ex value
+	targetElement = document.getElementById('X5ex');
+	x5ex = targetElement.value;
+	// console.log(x5out);
+	// Alert when no input at X5ex
+	// isNaN will be true if invalid number was entered
+	if ((! x5ex) || isNaN(x5ex)) {  // Alert when no input for X5ex
+		alert("X5exhaleを入力してください");
+		return false;
+	}
+	
+	// Get Fresin value
+	targetElement = document.getElementById('Fresin');
+	fresin = targetElement.value;
+	// console.log(fresin);
+	// Alert when no input at Fresin
+	// isNaN will be true if invalid number was entered
+	if ((! fresin) || isNaN(fresin)) {  // Alert when no input for Fresin
+		alert("Fresinhaleを入力してください");
+		return false;
+	}
+
+	// Get Fresex value
+	targetElement = document.getElementById('Fresex');
+	fresex = targetElement.value;
+	// console.log(fresex);
+	// Alert when no input at Fresex
+	// isNaN will be true if invalid number was entered
+	if ((! fresex) || isNaN(fresex)) {  // Alert when no input for Fresex
+		alert("Fresexhaleを入力してください");
+		return false;
+	}
+
+	// ALXin value
+	targetElement = document.getElementById('ALXin');
+	alxin = targetElement.value;
+	// console.log(alxin);
+	// Alert when no input at ALXin
+	// isNaN will be true if invalid number was entered
+	if ((! alxin) || isNaN(alxin)) {  // Alert when no input for ALXin
+		alert("ALXinhaleを入力してください");
+		return false;
+	}
+
+	// ALXex value
+	targetElement = document.getElementById('ALXex');
+	alxex = targetElement.value;
+	// console.log(alxex);
+	// Alert when no input at ALXex
+	// isNaN will be true if invalid number was entered
+	if ((! alxex) || isNaN(alxex)) {  // Alert when no input for ALXex
+		alert("ALXexhaleを入力してください");
+		return false;
+	}
+    return true;
+	}
+
+
+	<!-- DeepLearningを使用し、モストグラフ測定項目から喘息の可能性を計算する。結果はProbabilityForAbormalにセットする -->
+	function mostgraphinference(){
+	<!-- pass to Deep Learning inference [run()] -->
+    run(parseFloat(gender), parseFloat(r5in), parseFloat(r5ex), parseFloat(r20in), parseFloat(r20ex), parseFloat(x5in), parseFloat(x5ex), parseFloat(fresin), parseFloat(fresex), parseFloat(alxin), parseFloat(alxex));
+    // console.log(ProbabilityForAbormal)
+	}
+
+	function keisan_mostgraphfeno() {
+    <!--  analyze input -->
+    if (inputcheck_mostgraph() == false) return 0;
+	if (inputcheck_feno() == false) return 0;
+
+    mostgraphinference();
+    <!--  display result  [ProbabilityForAbormal] -->
+     if ((ProbabilityForAbormal < cutoff) && (feno < 37)){
+       elem.style.color = "green";
+       displaytext ="喘息ではない";
+     }
+     else{
+        elem.style.color = "red";
+        displaytext ="喘息である";
+     } <!-- End of  if ((ProbabilityForAbormal < cutoff) && (feno < 37)) -->
+     
+     <!-- set display value -->
+    displaytext = displaytext + "\n"
+    document.getElementById('Probability').innerText = displaytext
+	}
+
+	<!-- FeNOの入力チェック　入力されていたらTrue、入力されていないとFalseを返す -->
+	function inputcheck_feno(){
+	// FeNO value
+	targetElement = document.getElementById('FeNO');
+    feno = targetElement.value;
+	// console.log(alxex);
+	// Alert when no input at FeNO
+	// isNaN will be true if invalid number was entered
+	if ((! feno) || isNaN(feno)) {  // Alert when no input for FeNO
+		alert("FeNOを入力してください");
+		return false;
+	}
+	return true;
+	}
+
+	function keisan_mostgraphfenov25() {
+    <!--  analyze input -->
+	<!--return 0は関数をやめること -->>
+    if (inputcheck_mostgraph() == false) return 0;
+	if (inputcheck_feno() == false) return 0;
+	if(inputcheck_v25() == false)return 0;
+
+    mostgraphinference();
+    <!--  display result  [ProbabilityForAbormal] -->
+     if ((ProbabilityForAbormal < cutoff) && (feno < 37) && (v25 >= 50)){
+       elem.style.color = "green";
+       displaytext ="喘息ではない";
+     }
+     else{
+        elem.style.color = "red";
+        displaytext ="喘息である";
+     } <!-- End of  if ((ProbabilityForAbormal < cutoff) && (feno < 37) && (v25 >= 50)) -->
+     
+     <!-- set display value -->
+    displaytext = displaytext + "\n"
+    document.getElementById('Probability').innerText = displaytext
+	}
+
+	<!-- V25の入力チェック　入力されていたらTrue、入力されていないとFalseを返す -->
+	function inputcheck_v25(){
+	// %V25 value
+	targetElement = document.getElementById('%V25');
+	v25 = targetElement.value;
+	// console.log(v25);
+	// Alert when no input at %V25
+	// isNaN will be true if invalid number was entered
+	if ((! v25) || isNaN(v25)) {  // Alert when no input for %V25
+		alert("V25/予測V25(%)を入力してください");
+		return false;
+	}
+	return true;
+	}
    
     <!-- Deep Learning inference -->
-    async function run(gender, r5in, r5ex, r20in, r20ex, x5in, x5ex, fresin, fresex, alxin, alxex){
+    function run(gender, r5in, r5ex, r20in, r20ex, x5in, x5ex, fresin, fresex, alxin, alxex){
     // Caution: The web input order of inhale and exhale is opposite to the deep learning model input.
     // Return: Set  variable "ProbabilityForAbormal"
-    
-    const model = await tf.loadLayersModel('./mostgraph_model/model.json');
 
-    const x1 = tf.tensor2d([[gender, r5in, r5ex, r20in, r20ex, x5in, x5ex, fresin, fresex, alxin, alxex]]); 
-    x1.print(); 
-    const y1 = model.predict(x1); 
+    const x1 = tf.tensor2d([[gender, r5in, r5ex, r20in, r20ex, x5in, x5ex, fresin, fresex, alxin, alxex]]);
+    x1.print();
+    const y1 = model_mostgraph.predict(x1);
     y1.print();
 
    // Normal control
-   // const x2 = tf.tensor2d([[1, 1.07, 1.36, 1.72, 1.98, -0.22, -0.16, 6.03, 5.74, 0.7, 0.58]]); 
-   // x2.print(); 
-   // const y2 = model.predict(x2); 
-   // y2.print(); 
+   // const x2 = tf.tensor2d([[1, 1.07, 1.36, 1.72, 1.98, -0.22, -0.16, 6.03, 5.74, 0.7, 0.58]]);
+   // x2.print();
+   // const y2 = model.predict(x2);
+   // y2.print();
 
     // Abnormal control
-    // const x3 = tf.tensor2d([[0, 2.98, 4.43, 2.5, 2.69, -0.73, -2.93, 11.38, 21.1, 3.15, 24.07]]); 
-    // x3.print(); 
-    // const y3 = model.predict(x3); 
-    // y3.print(); 
+    // const x3 = tf.tensor2d([[0, 2.98, 4.43, 2.5, 2.69, -0.73, -2.93, 11.38, 21.1, 3.15, 24.07]]);
+    // x3.print();
+    // const y3 = model.predict(x3);
+    // y3.print();
 
     // set Result
     ProbabilityForAbormal = y1.reshape([-1]).arraySync()[0];
@@ -305,7 +386,7 @@
   </body>
 </html>
 
-<!-- 
+<!--
 diagnosis	gender	Rin5	Rex5	Rin20	Rex20	X5in	X5ex	Fresin	Fresex	ALXin	ALXex
 0	1	1.07	1.36	1.72	1.98	-0.22	-0.16	6.03	5.74	0.7	0.58
 1	0	2.98	4.43	2.5	2.69	-0.73	-2.93	11.38	21.1	3.15	24.07
